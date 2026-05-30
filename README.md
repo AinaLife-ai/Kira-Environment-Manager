@@ -123,7 +123,7 @@ kira-manager/
     └── logs/                    # 运行日志目录（自动生成）
 ```
 
-## 上游项目
+## 上游项目（友情链接）
 
 - [**KiraAI**](https://github.com/xxynet/KiraAI) — 多平台 AI 数字生命系统，本管理器所管理的目标项目
 - [**PyQt-Fluent-Widgets**](https://github.com/zhiyiYo/PyQt-Fluent-Widgets) — Fluent Design 风格的 PyQt5 组件库，本项目的 UI 框架
