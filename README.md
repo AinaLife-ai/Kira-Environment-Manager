@@ -51,7 +51,7 @@
 pip install PyQt5 qfluentwidgets
 
 # 2. 克隆本仓库
-git clone https://github.com/<your-username>/kira-manager.git
+git clone https://github.com/luochenYukitsune/Kira-Environment-Manager.git
 cd kira-manager
 
 # 3. 运行
