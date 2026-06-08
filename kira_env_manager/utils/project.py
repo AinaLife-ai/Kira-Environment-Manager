@@ -106,7 +106,7 @@ def clone_repo(url, target_path, output_callback=None, timeout=300):
     except FileNotFoundError:
         return False, "未找到 git 命令，请先安装 Git (https://git-scm.com/)"
     except Exception as e:
-        from kira_manager.utils.logger import logger
+        from kira_env_manager.utils.logger import logger
         logger.exception(f"Git clone 失败: {url} -> {target_path}")
         return False, f"克隆出错: {str(e)}"
 
@@ -173,7 +173,7 @@ def update_project(project_path, output_callback=None, timeout=120):
     except FileNotFoundError:
         return False, "未找到 git 命令"
     except Exception as e:
-        from kira_manager.utils.logger import logger
+        from kira_env_manager.utils.logger import logger
         logger.exception(f"Git pull 失败: {project_path}")
         return False, f"更新出错: {str(e)}"
 

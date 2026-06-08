@@ -30,8 +30,8 @@ def append_and_scroll(console, text):
 
 def get_mirror_for_install():
     """读取配置中的镜像设置，返回 (primary_url, fallback_urls, name) 用于依赖安装"""
-    from kira_manager.common.config import get as cfg_get
-    from kira_manager.utils.pip_mirrors import MIRRORS, get_mirror_url, get_mirror_name
+    from kira_env_manager.common.config import get as cfg_get
+    from kira_env_manager.utils.pip_mirrors import MIRRORS, get_mirror_url, get_mirror_name
 
     mirror_idx = cfg_get("mirror_index")
     primary = get_mirror_url(mirror_idx)
@@ -42,7 +42,7 @@ def get_mirror_for_install():
 
 def build_clone_url_from_results(results, repo):
     """从测速结果构建最快的 clone URL"""
-    from kira_manager.utils.network import GITHUB_ROUTES, convert_to_clone_url
+    from kira_env_manager.utils.network import GITHUB_ROUTES, convert_to_clone_url
 
     if not results:
         return f"https://github.com/{repo}.git", "直连"
@@ -58,14 +58,14 @@ def build_clone_url_from_results(results, repo):
 def get_project_path_fallback():
     """自动检测当前 KiraAI 项目路径（供多处复用）"""
     import os
-    from kira_manager.common.config import get as cfg_get
+    from kira_env_manager.common.config import get as cfg_get
 
     project_path = cfg_get("project_path")
     if project_path:
         return project_path
 
     current = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-    from kira_manager.utils.project import is_kira_project
+    from kira_env_manager.utils.project import is_kira_project
     if is_kira_project(current):
         return current
     return ""

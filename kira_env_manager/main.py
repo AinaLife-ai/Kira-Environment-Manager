@@ -1,10 +1,10 @@
-"""KiraAI Manager 入口"""
+"""Kira Environment Manager 入口"""
 
 import sys
 import os
 
 
-# 确保父目录在 sys.path 中，以支持 python kira_manager/main.py 或 python -m kira_manager.main
+# 确保父目录在 sys.path 中，以支持 python kira_env_manager/main.py 或 python -m kira_env_manager.main
 # 冻结模式下 PyInstaller 已处理路径，无需额外操作
 if not getattr(sys, 'frozen', False):
     _parent = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -17,8 +17,8 @@ from PyQt5.QtWidgets import QApplication, QMessageBox
 
 from qfluentwidgets import setTheme, Theme
 
-from kira_manager.utils.logger import setup_logging, logger, get_log_path
-from kira_manager.view.main_window import MainWindow
+from kira_env_manager.utils.logger import setup_logging, logger, get_log_path
+from kira_env_manager.view.main_window import MainWindow
 
 
 def _init_surface_format():
@@ -36,7 +36,7 @@ def _init_global_font(app):
 
     try:
         if getattr(sys, 'frozen', False):
-            font_dir = Path(sys._MEIPASS) / "kira_manager" / "fonts"
+            font_dir = Path(sys._MEIPASS) / "kira_env_manager" / "fonts"
         else:
             font_dir = Path(__file__).parent / "fonts"
 
@@ -92,9 +92,9 @@ def main():
         window.show()
         logger.info("主窗口已显示")
     except Exception as e:
-        logger.exception("KiraAI Manager 启动失败")
+        logger.exception("Kira Environment Manager 启动失败")
         QMessageBox.critical(
-            None, "KiraAI Manager 启动出错",
+            None, "Kira Environment Manager 启动出错",
             f"{type(e).__name__}: {e}\n\n日志文件: {get_log_path()}"
         )
         sys.exit(1)

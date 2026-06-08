@@ -285,6 +285,6 @@ def install_requirements(venv_path, requirements_path,
     except FileNotFoundError:
         return False, f"找不到 pip: {pip}"
     except Exception as e:
-        from kira_manager.utils.logger import logger
+        from kira_env_manager.utils.logger import logger
         logger.exception(f"依赖安装失败: {requirements_path}")
         return False, f"安装出错: {str(e)}"

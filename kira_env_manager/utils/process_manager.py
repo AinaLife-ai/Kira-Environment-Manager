@@ -59,10 +59,10 @@ class _ProcessWorker(QThread):
             self.process_finished.emit(exit_code)
 
         except Exception as e:
-            from kira_manager.utils.logger import logger
+            from kira_env_manager.utils.logger import logger
             logger.exception(f"进程启动失败: {self.cmd}")
             self.output_line.emit(f"\n[ERROR] 启动失败: {str(e)}\n"
-                                  f"(详情已写入日志: kira_manager/logs/)\n")
+                                  f"(详情已写入日志: kira_env_manager/logs/)\n")
             self.process_finished.emit(-1)
 
     def stop(self):

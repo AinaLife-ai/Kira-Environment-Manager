@@ -14,8 +14,8 @@ from qfluentwidgets import (
     FluentIcon as FIF, PrimaryPushButton,
 )
 
-from kira_manager.utils.logger import logger
-from kira_manager.common.config import get as cfg_get, full as cfg_full, save_full
+from kira_env_manager.utils.logger import logger
+from kira_env_manager.common.config import get as cfg_get, full as cfg_full, save_full
 
 
 class ConfigDialog(QDialog):

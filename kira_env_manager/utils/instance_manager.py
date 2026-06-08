@@ -4,8 +4,8 @@ import copy
 
 from PyQt5.QtCore import QObject, pyqtSignal
 
-from kira_manager.utils.process_manager import ProcessManager
-from kira_manager.utils.helpers import check_port_open
+from kira_env_manager.utils.process_manager import ProcessManager
+from kira_env_manager.utils.helpers import check_port_open
 
 
 class KiraInstance(QObject):

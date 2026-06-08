@@ -14,11 +14,11 @@ def get_app_data_dir():
     if getattr(sys, 'frozen', False):
         if os.name == 'nt':
             base = os.environ.get('APPDATA', os.path.expanduser('~'))
-            return Path(base) / "KiraManager"
+            return Path(base) / "KiraEnvManager"
         elif sys.platform == 'darwin':
-            return Path(os.path.expanduser('~')) / "Library" / "Application Support" / "KiraManager"
+            return Path(os.path.expanduser('~')) / "Library" / "Application Support" / "KiraEnvManager"
         else:
-            return Path(os.environ.get('XDG_CONFIG_HOME', os.path.expanduser('~/.config'))) / "kira-manager"
+            return Path(os.environ.get('XDG_CONFIG_HOME', os.path.expanduser('~/.config'))) / "kira-env-manager"
     else:
         return Path(__file__).parent.parent
 

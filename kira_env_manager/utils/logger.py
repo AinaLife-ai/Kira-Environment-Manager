@@ -8,7 +8,7 @@
 - 所有 UI 错误统一通过此模块记录
 
 用法：
-    from kira_manager.utils.logger import logger, setup_logging
+    from kira_env_manager.utils.logger import logger, setup_logging
     setup_logging()        # 在 main() 开头调用一次
     logger.info("...")
     logger.exception("...")  # 自动附带 traceback
@@ -23,14 +23,14 @@ import traceback
 from datetime import datetime
 from pathlib import Path
 
-from kira_manager.common.constants import get_app_data_dir
+from kira_env_manager.common.constants import get_app_data_dir
 
 LOG_DIR = get_app_data_dir() / "logs"
-LOG_FILE = LOG_DIR / "kira_manager.log"
+LOG_FILE = LOG_DIR / "kira_env_manager.log"
 MAX_BYTES = 5 * 1024 * 1024  # 5 MB per file
 BACKUP_COUNT = 7              # keep 7 rotated files
 
-logger = logging.getLogger("kira_manager")
+logger = logging.getLogger("kira_env_manager")
 logger.setLevel(logging.DEBUG)
 
 _initialized = False
@@ -60,7 +60,7 @@ def setup_logging(log_dir=None):
 
         d = Path(log_dir) if log_dir else LOG_DIR
         d.mkdir(parents=True, exist_ok=True)
-        log_path = d / "kira_manager.log"
+        log_path = d / "kira_env_manager.log"
 
         # 记录启动前的文件大小作为偏移量（只显示本次启动后的日志）
         try:
@@ -106,7 +106,7 @@ def setup_logging(log_dir=None):
         _log_path = str(log_path)
 
         logger.info("=" * 50)
-        logger.info(f"KiraAI Manager 启动 — {datetime.now().isoformat()}")
+        logger.info(f"Kira Environment Manager 启动 — {datetime.now().isoformat()}")
         logger.info(f"日志文件: {log_path}")
 
         _initialized = True
@@ -262,10 +262,10 @@ def get_log_path():
         return _log_path
     d = LOG_DIR
     if d.exists():
-        files = sorted(d.glob("kira_manager.log*"), key=os.path.getmtime, reverse=True)
+        files = sorted(d.glob("kira_env_manager.log*"), key=os.path.getmtime, reverse=True)
         if files:
             return str(files[0])
-    return str(LOG_DIR / "kira_manager.log")
+    return str(LOG_DIR / "kira_env_manager.log")
 
 
 # ---- UI 通知函数（自动记录日志）----

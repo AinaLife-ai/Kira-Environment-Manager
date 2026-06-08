@@ -1,17 +1,17 @@
-; Inno Setup 安装脚本 — KiraAI Manager
+; Inno Setup 安装脚本 — Kira Environment Manager
 ; 需要 Inno Setup 6+ (https://jrsoftware.org/isdl.php)
 ;
 ; 用法:
-;   1. 先运行 pyinstaller packaging.spec 生成 dist/KiraManager.exe
+;   1. 先运行 pyinstaller packaging.spec 生成 dist/KiraEnvManager.exe
 ;   2. 在 Inno Setup Compiler 中打开本文件 → Compile
 ;   或命令行: iscc installer.iss
 
-#define MyAppName "KiraAI Manager"
-#define MyAppVersion "0.6.0_dev"
+#define MyAppName "Kira Environment Manager"
+#define MyAppVersion "0.6.1_beta"
 #define MyAppPublisher "KiraAI"
 #define MyAppURL "https://github.com/xxynet/KiraAI"
-#define MyAppExeName "KiraManager.exe"
-#define MyAppAssocName "KiraAI Manager Config"
+#define MyAppExeName "KiraEnvManager.exe"
+#define MyAppAssocName "Kira Environment Manager Config"
 #define MyAppAssocExt ".json"
 
 [Setup]
@@ -30,7 +30,7 @@ AllowNoIcons=yes
 
 ; 输出
 OutputDir=dist\installer
-OutputBaseFilename=KiraManager_Setup_{#MyAppVersion}
+OutputBaseFilename=KiraEnvManager_Setup_{#MyAppVersion}
 
 ; 图标
 SetupIconFile=app.ico
@@ -79,7 +79,7 @@ Filename: "{app}\{#MyAppExeName}"; Description: "立即启动 {#MyAppName}"; Fla
 
 [UninstallRun]
 ; 卸载时清理用户数据目录（可选，仅当用户确认）
-Filename: "{cmd}"; Parameters: "/c rmdir /s /q ""{userappdata}\KiraManager"""; Flags: runhidden; RunOnceId: "DeleteUserData"
+Filename: "{cmd}"; Parameters: "/c rmdir /s /q ""{userappdata}\KiraEnvManager"""; Flags: runhidden; RunOnceId: "DeleteUserData"
 
 [Code]
 var
@@ -92,7 +92,7 @@ begin
     wpSelectProgramGroup,
     '删除用户数据',
     '是否同时删除配置文件与日志？',
-    '勾选后将删除 %APPDATA%\KiraManager 目录（配置文件、日志、实例设置）。' + #13#10 +
+    '勾选后将删除 %APPDATA%\KiraEnvManager 目录（配置文件、日志、实例设置）。' + #13#10 +
     '保留此数据可在下次安装时恢复之前的配置。',
     False, False
   );
@@ -147,8 +147,8 @@ begin
   begin
     if DeleteDataPage.CheckListBox.Checked[0] then
     begin
-      { 删除 %APPDATA%\KiraManager }
-      Exec('cmd.exe', '/c rmdir /s /q "' + ExpandConstant('{userappdata}\KiraManager') + '"',
+      { 删除 %APPDATA%\KiraEnvManager }
+      Exec('cmd.exe', '/c rmdir /s /q "' + ExpandConstant('{userappdata}\KiraEnvManager') + '"',
            '', SW_HIDE, ewWaitUntilTerminated, ExecResult);
     end;
   end;

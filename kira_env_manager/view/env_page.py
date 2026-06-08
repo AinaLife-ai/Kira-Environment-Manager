@@ -13,19 +13,19 @@ from qfluentwidgets import (
     TextBrowser, FluentIcon as FIF,
 )
 
-from kira_manager.utils.python_env import (
+from kira_env_manager.utils.python_env import (
     detect_python, get_python_download_urls, create_venv,
     install_requirements, is_venv,
 )
-from kira_manager.utils.pip_mirrors import (
+from kira_env_manager.utils.pip_mirrors import (
     MIRRORS, test_all_mirrors, safe_mirror_index,
 )
-from kira_manager.utils.helpers import append_and_scroll, get_mirror_for_install
-from kira_manager.utils.logger import (
+from kira_env_manager.utils.helpers import append_and_scroll, get_mirror_for_install
+from kira_env_manager.utils.logger import (
     logger, notify_info, notify_success, notify_warning, notify_error,
 )
-from kira_manager.common.config import get as cfg_get, set_config as cfg_set
-from kira_manager.common.constants import PAGE_MARGINS
+from kira_env_manager.common.config import get as cfg_get, set_config as cfg_set
+from kira_env_manager.common.constants import PAGE_MARGINS
 
 
 class VenvWorker(QThread):

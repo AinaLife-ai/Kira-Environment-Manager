@@ -10,7 +10,7 @@ import os
 import threading
 from pathlib import Path
 
-from kira_manager.common.constants import get_app_data_dir
+from kira_env_manager.common.constants import get_app_data_dir
 
 
 DEFAULT_CONFIG = {
@@ -54,7 +54,7 @@ def _read_file():
             return cfg
         except Exception as e:
             try:
-                from kira_manager.utils.logger import logger
+                from kira_env_manager.utils.logger import logger
                 logger.warning(f"读取配置文件失败 ({CONFIG_FILE}): {e}")
             except ImportError:
                 pass
@@ -92,7 +92,7 @@ def _write_atomic(cfg):
         except OSError:
             pass
         try:
-            from kira_manager.utils.logger import logger
+            from kira_env_manager.utils.logger import logger
             logger.warning(f"写入配置文件失败 ({CONFIG_FILE}): {e}")
         except ImportError:
             pass

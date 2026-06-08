@@ -7,13 +7,13 @@ from PyQt5.QtWidgets import QMessageBox
 
 from qfluentwidgets import FluentWindow, NavigationItemPosition, FluentIcon as FIF
 
-from kira_manager.view.home_page import HomePage
-from kira_manager.view.env_page import EnvPage
-from kira_manager.view.project_page import ProjectPage
-from kira_manager.view.launch_page import LaunchPage
-from kira_manager.view.browser_page import BrowserPage
-from kira_manager.view.log_page import LogPage
-from kira_manager.common.constants import WINDOW_WIDTH, WINDOW_HEIGHT
+from kira_env_manager.view.home_page import HomePage
+from kira_env_manager.view.env_page import EnvPage
+from kira_env_manager.view.project_page import ProjectPage
+from kira_env_manager.view.launch_page import LaunchPage
+from kira_env_manager.view.browser_page import BrowserPage
+from kira_env_manager.view.log_page import LogPage
+from kira_env_manager.common.constants import WINDOW_WIDTH, WINDOW_HEIGHT
 
 
 class MainWindow(FluentWindow):
@@ -64,7 +64,7 @@ class MainWindow(FluentWindow):
 
     def initWindow(self):
         self.resize(WINDOW_WIDTH, WINDOW_HEIGHT)
-        self.setWindowTitle("KiraAI Manager")
+        self.setWindowTitle("Kira Environment Manager")
         png_icon = Path(__file__).parent.parent / "app.png"
         if png_icon.exists():
             self.setWindowIcon(QIcon(str(png_icon)))
@@ -98,7 +98,7 @@ class MainWindow(FluentWindow):
         }
         target = targets.get(routeKey)
         if target is None:
-            from kira_manager.utils.logger import logger
+            from kira_env_manager.utils.logger import logger
             logger.warning(f"未找到页面: {routeKey}")
             return
         self.stackedWidget.setCurrentWidget(target)
@@ -106,13 +106,13 @@ class MainWindow(FluentWindow):
 
     def closeEvent(self, event):
         """关闭窗口时停止所有运行中的实例"""
-        from kira_manager.utils.logger import logger
+        from kira_env_manager.utils.logger import logger
 
         # 清理启动页卡片中的后台线程，避免 QThread destroyed while running
         if hasattr(self, 'launch_page'):
             cards_widget = getattr(self.launch_page, 'cards_widget', None)
             if cards_widget:
-                from kira_manager.view.launch_page import InstanceCard
+                from kira_env_manager.view.launch_page import InstanceCard
                 for card in cards_widget.findChildren(InstanceCard):
                     card.cleanup()
 

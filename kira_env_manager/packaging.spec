@@ -1,12 +1,12 @@
 # -*- mode: python ; coding: utf-8 -*-
 """
-PyInstaller 打包配置 — KiraAI Manager
+PyInstaller 打包配置 — Kira Environment Manager
 
-用法（从 kira_manager 目录执行）:
-    cd kira_manager  &&  pyinstaller packaging.spec
+用法（从 kira_env_manager 目录执行）:
+    cd kira_env_manager  &&  pyinstaller packaging.spec
 
 输出:
-    dist/KiraManager.exe
+    dist/KiraEnvManager.exe
 """
 
 import os
@@ -14,7 +14,7 @@ import sys
 from pathlib import Path
 
 # ── 路径基础 ──────────────────────────────────────────────────────────────
-# spec 上下文中 __file__ 不可用，但 os.getcwd() 可用（前提是从 kira_manager 目录运行）
+# spec 上下文中 __file__ 不可用，但 os.getcwd() 可用（前提是从 kira_env_manager 目录运行）
 CWD = Path(os.getcwd()).resolve()
 APP_ICO = CWD / "app.ico"
 
@@ -140,7 +140,7 @@ exe = EXE(
     a.binaries,
     a.datas,
     [],
-    name="KiraManager",
+    name="KiraEnvManager",
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
@@ -164,5 +164,5 @@ exe = EXE(
 #     strip=False,
 #     upx=True,
 #     upx_exclude=[],
-#     name="KiraManager",
+#     name="KiraEnvManager",
 # )

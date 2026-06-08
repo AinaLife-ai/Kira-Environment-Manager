@@ -1,4 +1,4 @@
-"""日志页面 - 查看和管理 KiraAI Manager 日志"""
+"""日志页面 - 查看和管理 Kira Environment Manager 日志"""
 
 import os
 from PyQt5.QtCore import Qt, QTimer
@@ -9,12 +9,12 @@ from qfluentwidgets import (
     FluentIcon as FIF,
 )
 
-from kira_manager.utils.logger import (
+from kira_env_manager.utils.logger import (
     LOG_DIR, get_log_path, get_startup_offset,
     notify_success, notify_error, notify_warning,
     logger,
 )
-from kira_manager.common.constants import PAGE_MARGINS, BUTTON_HEIGHT_SMALL
+from kira_env_manager.common.constants import PAGE_MARGINS, BUTTON_HEIGHT_SMALL
 
 MAX_DISPLAY_LINES = 500  # 最大显示行数
 

@@ -20,27 +20,27 @@ from qfluentwidgets import (
     TransparentToolButton, StateToolTip,
 )
 
-from kira_manager.utils.instance_manager import InstanceManager
-from kira_manager.utils.python_env import (
+from kira_env_manager.utils.instance_manager import InstanceManager
+from kira_env_manager.utils.python_env import (
     get_venv_python, is_venv, create_venv, install_requirements,
     check_dependencies_installed,
 )
-from kira_manager.utils.project import (
+from kira_env_manager.utils.project import (
     clone_repo, check_kira_version, is_kira_project,
     check_git_installed, KIRA_GITHUB_URL,
 )
-from kira_manager.utils.network import test_all_routes, GITHUB_ROUTES, convert_to_clone_url
-from kira_manager.utils.helpers import (
+from kira_env_manager.utils.network import test_all_routes, GITHUB_ROUTES, convert_to_clone_url
+from kira_env_manager.utils.helpers import (
     append_and_scroll, get_mirror_for_install,
     build_clone_url_from_results, status_color,
     check_port_open,
 )
-from kira_manager.utils.logger import (
+from kira_env_manager.utils.logger import (
     logger, notify_info, notify_success, notify_warning, notify_error, notify_critical,
 )
-from kira_manager.common.config import get as cfg_get, set_config as cfg_set, full as cfg_full, save_full
-from kira_manager.view.config_page import ConfigDialog
-from kira_manager.common.constants import PAGE_MARGINS, BUTTON_HEIGHT_MEDIUM, BUTTON_HEIGHT_SMALL
+from kira_env_manager.common.config import get as cfg_get, set_config as cfg_set, full as cfg_full, save_full
+from kira_env_manager.view.config_page import ConfigDialog
+from kira_env_manager.common.constants import PAGE_MARGINS, BUTTON_HEIGHT_MEDIUM, BUTTON_HEIGHT_SMALL
 
 
 def _remove_readonly(func, path, exc_info):

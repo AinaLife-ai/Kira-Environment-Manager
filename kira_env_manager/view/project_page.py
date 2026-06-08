@@ -12,16 +12,16 @@ from qfluentwidgets import (
     TextBrowser, SubtitleLabel, BodyLabel, FluentIcon as FIF,
 )
 
-from kira_manager.utils.project import (
+from kira_env_manager.utils.project import (
     check_kira_version, is_kira_project,
     update_project, check_git_installed, KIRA_GITHUB_URL,
 )
-from kira_manager.utils.helpers import append_and_scroll, get_project_path_fallback
-from kira_manager.utils.logger import (
+from kira_env_manager.utils.helpers import append_and_scroll, get_project_path_fallback
+from kira_env_manager.utils.logger import (
     logger, notify_info, notify_success, notify_warning, notify_error,
 )
-from kira_manager.common.config import get as cfg_get, set_config as cfg_set, DEFAULT_CONFIG
-from kira_manager.common.constants import PAGE_MARGINS
+from kira_env_manager.common.config import get as cfg_get, set_config as cfg_set, DEFAULT_CONFIG
+from kira_env_manager.common.constants import PAGE_MARGINS
 
 
 class PullWorker(QThread):

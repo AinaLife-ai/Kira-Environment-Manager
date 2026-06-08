@@ -9,9 +9,9 @@ from qfluentwidgets import (
     PushButton, CardWidget, FluentIcon as FIF, isDarkTheme,
 )
 
-from kira_manager.utils.logger import logger
-from kira_manager.common.constants import BUTTON_HEIGHT_SMALL
-from kira_manager.utils.helpers import check_port_open
+from kira_env_manager.utils.logger import logger
+from kira_env_manager.common.constants import BUTTON_HEIGHT_SMALL
+from kira_env_manager.utils.helpers import check_port_open
 
 
 class InstanceCard(CardWidget):
@@ -180,7 +180,7 @@ class BrowserPage(QWidget):
         if check_port_open("127.0.0.1", port):
             webbrowser.open(f"http://localhost:{port}")
         else:
-            from kira_manager.utils.logger import notify_warning
+            from kira_env_manager.utils.logger import notify_warning
             notify_warning("提示", f"实例 {name} 未运行，请先启动", parent=self)
 
     def _open_all(self):

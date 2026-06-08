@@ -9,12 +9,12 @@ from qfluentwidgets import (
     FluentIcon as FIF, setFont,
 )
 
-from kira_manager.utils.python_env import detect_python
-from kira_manager.utils.project import (
+from kira_env_manager.utils.python_env import detect_python
+from kira_env_manager.utils.project import (
     check_kira_version, is_kira_project, check_git_installed,
 )
-from kira_manager.utils.helpers import status_color, get_project_path_fallback
-from kira_manager.common.constants import PAGE_MARGINS
+from kira_env_manager.utils.helpers import status_color, get_project_path_fallback
+from kira_env_manager.common.constants import PAGE_MARGINS
 
 
 class StatusCard(CardWidget):
@@ -61,7 +61,7 @@ class HomePage(QWidget):
         self.main_layout.setSpacing(20)
 
         # 标题区
-        title = TitleLabel("KiraAI Manager", self)
+        title = TitleLabel("Kira Environment Manager", self)
         self.main_layout.addWidget(title)
 
         subtitle = BodyLabel("管理你的 KiraAI 数字生命", self)

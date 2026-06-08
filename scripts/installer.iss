@@ -1,11 +1,11 @@
-; KiraManager 安装包 —— Inno Setup 脚本
+; KiraEnvManager 安装包 —— Inno Setup 脚本
 ; 用法: ISCC.exe scripts\installer.iss
 
-#define MyAppName "KiraManager"
-#define MyAppVersion "0.6.0_dev"
+#define MyAppName "KiraEnvManager"
+#define MyAppVersion "0.6.1_beta"
 #define MyAppPublisher "KiraAI"
 #define MyAppURL "https://github.com/xxynet/KiraAI"
-#define MyAppExeName "KiraManager.exe"
+#define MyAppExeName "KiraEnvManager.exe"
 
 [Setup]
 AppId={{A1B2C3D4-E5F6-7890-ABCD-EF1234567890}
@@ -19,8 +19,8 @@ DefaultDirName={autopf}\{#MyAppName}
 DefaultGroupName={#MyAppName}
 AllowNoIcons=yes
 OutputDir=..\dist
-OutputBaseFilename=KiraManager_Setup_{#MyAppVersion}
-SetupIconFile=..\kira_manager\app.ico
+OutputBaseFilename=KiraEnvManager_Setup_{#MyAppVersion}
+SetupIconFile=..\kira_env_manager\app.ico
 UninstallDisplayIcon={app}\{#MyAppExeName}
 Compression=lzma2/max
 SolidCompression=yes
@@ -35,7 +35,7 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}:"; Flags: checkedonce
 
 [Files]
-Source: "..\dist\KiraManager\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "..\dist\KiraEnvManager\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 
 [Icons]
 Name: "{group}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"
@@ -47,7 +47,7 @@ Filename: "{app}\{#MyAppExeName}"; Description: "启动 {#MyAppName}"; Flags: po
 
 [UninstallRun]
 ; 清理应用数据目录（配置、日志）
-Filename: "{cmd}"; Parameters: "/c rmdir /s /q ""{userappdata}\KiraManager"""; Flags: runhidden
+Filename: "{cmd}"; Parameters: "/c rmdir /s /q ""{userappdata}\KiraEnvManager"""; Flags: runhidden
 
 [Code]
 function InitializeSetup: Boolean;

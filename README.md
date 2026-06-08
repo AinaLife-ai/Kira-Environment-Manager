@@ -1,4 +1,4 @@
-# KiraAI Manager
+# Kira Environment Manager
 
 KiraAI 桌面管理工具 — 一键下载、配置、运行和管理多个 KiraAI 实例。
 
@@ -19,14 +19,14 @@ KiraAI 桌面管理工具 — 一键下载、配置、运行和管理多个 Kira
 pip install PyQt5 qfluentwidgets
 
 # 运行
-python kira_manager/main.py
+python kira_env_manager/main.py
 ```
 
 ## 构建安装包
 
 ```bash
 # 1. PyInstaller 打包
-pyinstaller KiraManager.spec --clean --noconfirm
+pyinstaller KiraEnvManager.spec --clean --noconfirm
 
 # 2. Inno Setup 制作安装包
 ISCC.exe scripts\installer.iss
