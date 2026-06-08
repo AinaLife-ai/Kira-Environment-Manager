@@ -1,7 +1,6 @@
 """UI 公共工具 — 控制台滚动、镜像选择、色彩常量、端口检测"""
 
 import socket
-from html import escape
 
 from qfluentwidgets import isDarkTheme, StateToolTip
 
@@ -17,8 +16,15 @@ def scroll_console_to_bottom(console):
 
 
 def append_and_scroll(console, text):
-    """向 TextBrowser 追加文本并滚动到底部"""
-    console.append(escape(text.rstrip()))
+    """向 TextBrowser 追加文本并滚动到底部
+
+    使用 insertPlainText 追加到末尾，避免 html.escape 对 < > & 等
+    正常输出字符的意外转义。
+    """
+    # 移到文档末尾后插入纯文本
+    cursor = console.textCursor()
+    cursor.movePosition(cursor.MoveOperation.End)
+    cursor.insertText(text.rstrip() + "\n")
     scroll_console_to_bottom(console)
 
 

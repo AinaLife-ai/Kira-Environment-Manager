@@ -120,8 +120,25 @@ class ProcessManager(QObject):
 
         if self._worker:
             if self._worker.isRunning():
+                # 停止旧 worker，用 finished 信号异步接力启动新 worker
                 self._worker.stop()
-                self._worker.wait(5000)
+                old_worker = self._worker
+                self._worker = None
+
+                def _start_new():
+                    if old_worker.isRunning():
+                        old_worker.wait(500)
+                    old_worker.deleteLater()
+                    self._worker = _ProcessWorker(cmd, cwd, env)
+                    self._worker.output_line.connect(self._on_output)
+                    self._worker.process_finished.connect(self._on_finished)
+                    self._worker.start()
+                    self._running = True
+                    self.state_changed.emit(True)
+
+                old_worker.process_finished.connect(_start_new)
+                return True
+
             self._worker.deleteLater()
             self._worker = None
 
@@ -141,8 +158,10 @@ class ProcessManager(QObject):
 
         self.output_received.emit("\n>>> 正在停止进程...\n")
         self._worker.stop()
+        # 不阻塞主线程：stop() 已经 taskkill /F，进程几乎瞬间结束
+        # 500ms 等待足以覆盖绝大多数情况，超时后由 finished 信号处理清理
         if self._worker.isRunning():
-            self._worker.wait(5000)
+            self._worker.wait(500)
         self._running = False
         self.state_changed.emit(False)
 

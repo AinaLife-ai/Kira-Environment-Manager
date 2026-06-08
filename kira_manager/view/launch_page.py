@@ -9,7 +9,7 @@ from PyQt5.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QScrollArea,
     QMessageBox, QLabel, QFrame, QDialog, QDialogButtonBox,
     QCheckBox, QLineEdit, QSpinBox, QFileDialog, QProgressBar,
-    QPushButton, QInputDialog, QComboBox,
+    QPushButton, QInputDialog, QComboBox, QLayoutItem,
 )
 
 from qfluentwidgets import (
@@ -500,7 +500,10 @@ class InstanceCard(CardWidget):
     def cleanup(self):
         """销毁前调用：断开定时器、停止后台线程，避免资源泄漏"""
         # 断开信号连接防止 timer 在对象析构过程中触发
-        self._port_check_timer.timeout.disconnect(self._check_port_status)
+        try:
+            self._port_check_timer.timeout.disconnect(self._check_port_status)
+        except TypeError:
+            pass  # 信号已断开或从未连接
         self._port_check_timer.stop()
         # 等待后台线程结束
         if self._deps_worker and self._deps_worker.isRunning():
@@ -522,6 +525,7 @@ class LaunchPage(QScrollArea):
         self._im = InstanceManager(self)
         self._setup_worker = None
         self._state_tip = None
+        self._removing = False  # 防止删除时的信号重入标志
 
         container = QWidget(self)
         self.setWidget(container)
@@ -620,36 +624,48 @@ class LaunchPage(QScrollArea):
         self._check_orphan_processes()
 
     def _get_pid_by_port(self, port):
-        """根据端口获取占用该端口的进程 PID"""
+        """根据端口获取占用该端口的进程 PID（跨平台）"""
         import subprocess
         try:
-            # Windows: netstat -ano | findstr :端口
-            result = subprocess.run(
-                ["netstat", "-ano"],
-                capture_output=True, text=True, timeout=5,
-                creationflags=subprocess.CREATE_NO_WINDOW if os.name == 'nt' else 0,
-            )
-            for line in result.stdout.splitlines():
-                if f":{port}" in line and "LISTENING" in line:
-                    parts = line.split()
-                    if parts:
-                        try:
-                            return int(parts[-1])
-                        except ValueError:
-                            pass
+            if os.name == 'nt':
+                result = subprocess.run(
+                    ["netstat", "-ano"],
+                    capture_output=True, text=True, timeout=5,
+                    creationflags=subprocess.CREATE_NO_WINDOW,
+                )
+                for line in result.stdout.splitlines():
+                    if f":{port}" in line and "LISTENING" in line:
+                        parts = line.split()
+                        if parts:
+                            try:
+                                return int(parts[-1])
+                            except ValueError:
+                                pass
+            else:
+                # Linux/macOS: lsof -ti :PORT
+                result = subprocess.run(
+                    ["lsof", "-ti", f":{port}"],
+                    capture_output=True, text=True, timeout=5,
+                )
+                if result.stdout.strip():
+                    return int(result.stdout.strip().split("\n")[0])
         except Exception as e:
             logger.error(f"获取端口 {port} 的 PID 失败: {e}")
         return None
 
     def _kill_process_by_pid(self, pid):
-        """根据 PID 杀死进程"""
+        """根据 PID 杀死进程（跨平台）"""
         import subprocess
+        import signal
         try:
-            subprocess.run(
-                ["taskkill", "/F", "/PID", str(pid)],
-                capture_output=True, timeout=5,
-                creationflags=subprocess.CREATE_NO_WINDOW if os.name == 'nt' else 0,
-            )
+            if os.name == 'nt':
+                subprocess.run(
+                    ["taskkill", "/F", "/PID", str(pid)],
+                    capture_output=True, timeout=5,
+                    creationflags=subprocess.CREATE_NO_WINDOW,
+                )
+            else:
+                os.kill(pid, signal.SIGKILL)
             return True
         except Exception as e:
             logger.error(f"杀死进程 {pid} 失败: {e}")
@@ -813,6 +829,8 @@ class LaunchPage(QScrollArea):
 
     def _rebuild_cards(self):
         """增量更新卡片列表 — 实例数不变时仅刷新状态，避免全量销毁重建"""
+        if self._removing:
+            return
         try:
             instances = self._im.instances()
             self.empty_hint.setVisible(len(instances) == 0)
@@ -854,14 +872,36 @@ class LaunchPage(QScrollArea):
         # 通过 FlowLayout 自身的方法移除所有 widget，确保内部 _items 列表同步清空
         while self.cards_layout.count():
             item = self.cards_layout.takeAt(0)
-            if item:
+            if item is None:
+                continue
+            # 防御：FlowLayout 内部状态损坏时 takeAt 可能返回裸 widget
+            if isinstance(item, QLayoutItem):
                 w = item.widget()
-                if w:
-                    if isinstance(w, InstanceCard):
-                        w.cleanup()
-                    w.setParent(None)
-                    w.deleteLater()
+            else:
+                w = item
+            if w and isinstance(w, InstanceCard):
+                w.cleanup()
+                w.deleteLater()
         self._cached_instance_ids = set()
+        # 清理已删除实例的日志缓冲区
+        self._clean_stale_buffers()
+
+    def _clean_stale_buffers(self):
+        """清理已删除实例的日志缓冲区"""
+        current_names = {inst.name for inst in self._im.instances()}
+        stale = [n for n in self._log_buffers if n != "通用" and n not in current_names]
+        for name in stale:
+            del self._log_buffers[name]
+
+    # ---- 公共方法（供 MainWindow/HomePage 使用，避免直接访问 _im） ----
+
+    def instance_manager(self):
+        """返回 InstanceManager 实例"""
+        return self._im
+
+    def running_count(self):
+        """返回运行中实例数量"""
+        return self._im.running_count()
 
     def _on_card_selected(self, instance):
         self._im.set_active(instance)
@@ -937,8 +977,8 @@ class LaunchPage(QScrollArea):
                 notify_error("错误", f"项目不完整，缺少 main.py", parent=self)
                 return
 
-            # venv 路径始终在项目目录下
-            venv_path = os.path.join(project_path, "venv")
+            # venv 路径：优先使用已配置的 venv，否则用项目目录下的默认路径
+            venv_path = cfg_get("venv_path") or os.path.join(project_path, "venv")
 
             # 检查 venv 是否存在且有效
             if not is_venv(venv_path):
@@ -1015,26 +1055,31 @@ class LaunchPage(QScrollArea):
 
         reply = msg_box.exec_()
         if reply == QMessageBox.Yes:
-            # 先停止实例
-            if instance.is_running():
-                instance.stop()
+            self._removing = True
+            try:
+                # 先停止实例
+                if instance.is_running():
+                    instance.stop()
 
-            # 如果勾选了删除文件，执行删除
-            if delete_files_cb.isChecked():
-                project_path = instance.project_path
-                if project_path and os.path.isdir(project_path):
-                    try:
-                        shutil.rmtree(project_path, onerror=_remove_readonly)
-                        logger.info(f"已删除项目目录: {project_path}")
-                        notify_success("已删除", f"项目目录已删除: {project_path}", parent=self)
-                    except Exception as e:
-                        logger.exception(f"删除项目目录失败: {project_path}")
-                        notify_error("删除失败", f"无法删除项目目录: {e}", parent=self)
-                else:
-                    notify_warning("提示", "项目目录不存在，跳过文件删除", parent=self)
+                # 如果勾选了删除文件，执行删除
+                if delete_files_cb.isChecked():
+                    project_path = instance.project_path
+                    if project_path and os.path.isdir(project_path):
+                        try:
+                            shutil.rmtree(project_path, onerror=_remove_readonly)
+                            logger.info(f"已删除项目目录: {project_path}")
+                            notify_success("已删除", f"项目目录已删除: {project_path}", parent=self)
+                        except Exception as e:
+                            logger.exception(f"删除项目目录失败: {project_path}")
+                            notify_error("删除失败", f"无法删除项目目录: {e}", parent=self)
+                    else:
+                        notify_warning("提示", "项目目录不存在，跳过文件删除", parent=self)
 
-            # 从实例列表中移除
-            self._im.remove_by_name(instance.name)
+                # 从实例列表中移除
+                self._im.remove_by_name(instance.name)
+            finally:
+                self._removing = False
+            self._rebuild_cards()  # 手动重建（信号已被 _removing 抑制）
             self._save()
 
     def _start_all(self):
@@ -1115,4 +1160,4 @@ class LaunchPage(QScrollArea):
     def _notify_home(self):
         w = self.window()
         if w and hasattr(w, "home_page"):
-            w.home_page.update_running_status(self._im.running_count())
+            w.home_page.update_running_status(self.running_count())

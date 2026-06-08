@@ -4,6 +4,7 @@ import os
 import re
 import shutil
 import subprocess
+import threading
 from pathlib import Path
 
 
@@ -54,34 +55,44 @@ def clone_repo(url, target_path, output_callback=None, timeout=300):
             output_callback(f">>> git clone {url} {target_path}\n")
 
         proc = subprocess.Popen(
-            ["git", "clone", "--progress", url, str(target_path)],
+            ["git", "clone", "--progress", "--depth", "1", url, str(target_path)],
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
             text=True,
             bufsize=1,
+            creationflags=0x08000000,
         )
 
-        start_time = time.time()
-        try:
-            for line in proc.stdout:
-                # 检查超时
-                if time.time() - start_time > timeout:
-                    proc.terminate()
-                    try:
-                        proc.wait(5)
-                    except subprocess.TimeoutExpired:
-                        proc.kill()
-                        proc.wait()
-                    shutil.rmtree(target_path, ignore_errors=True)
-                    return False, f"克隆超时 ({timeout}秒)"
+        # 读线程：在后台读取 stdout，通过 callback 实时输出
+        _stop_reader = [False]
 
+        def _reader():
+            for line in proc.stdout:
+                if _stop_reader[0]:
+                    break
                 if output_callback:
                     output_callback(line)
-        finally:
-            if proc.stdout:
-                proc.stdout.close()
 
-        proc.wait()
+        reader = threading.Thread(target=_reader, daemon=True)
+        reader.start()
+
+        # 主线程直接 wait，确保 wait 返回后 returncode 一定可读
+        try:
+            proc.wait(timeout=timeout)
+        except subprocess.TimeoutExpired:
+            _stop_reader[0] = True
+            proc.kill()
+            proc.wait()
+            shutil.rmtree(target_path, ignore_errors=True)
+            return False, f"克隆超时 ({timeout}秒)"
+        finally:
+            # 关闭管道，让读线程退出
+            if proc.stdout:
+                try:
+                    proc.stdout.close()
+                except OSError:
+                    pass
+            reader.join(timeout=3)
 
         if proc.returncode == 0:
             version = check_kira_version(str(target_path))
@@ -100,7 +111,7 @@ def clone_repo(url, target_path, output_callback=None, timeout=300):
         return False, f"克隆出错: {str(e)}"
 
 
-def update_project(project_path, output_callback=None):
+def update_project(project_path, output_callback=None, timeout=120):
     """更新项目 (git pull)
 
     Returns:
@@ -121,17 +132,37 @@ def update_project(project_path, output_callback=None):
             text=True,
             bufsize=1,
             cwd=str(project_path),
+            creationflags=0x08000000,
         )
 
-        try:
+        # 读线程：后台读取 stdout，通过 callback 实时输出
+        _stop_reader = [False]
+
+        def _reader():
             for line in proc.stdout:
+                if _stop_reader[0]:
+                    break
                 if output_callback:
                     output_callback(line)
+
+        reader = threading.Thread(target=_reader, daemon=True)
+        reader.start()
+
+        # 主线程直接 wait，确保 returncode 可读
+        try:
+            proc.wait(timeout=timeout)
+        except subprocess.TimeoutExpired:
+            _stop_reader[0] = True
+            proc.kill()
+            proc.wait()
+            return False, f"更新超时 ({timeout}秒)"
         finally:
             if proc.stdout:
-                proc.stdout.close()
-
-        proc.wait()
+                try:
+                    proc.stdout.close()
+                except OSError:
+                    pass
+            reader.join(timeout=3)
 
         if proc.returncode == 0:
             version = check_kira_version(str(project_path))
@@ -150,7 +181,7 @@ def update_project(project_path, output_callback=None):
 def check_git_installed():
     """检测 Git 是否已安装并返回版本"""
     try:
-        result = subprocess.run(["git", "--version"], capture_output=True, text=True, timeout=10)
+        result = subprocess.run(["git", "--version"], capture_output=True, text=True, timeout=10, creationflags=0x08000000)
         if result.returncode == 0:
             return result.stdout.strip()
         return None

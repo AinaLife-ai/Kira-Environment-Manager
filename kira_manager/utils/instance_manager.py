@@ -134,23 +134,27 @@ class InstanceManager(QObject):
         return inst
 
     def remove(self, index):
-        """删除指定索引的实例"""
-        if 0 <= index < len(self._instances):
-            inst = self._instances[index]
-            inst.stop()
-            if inst._pm._worker and inst._pm._worker.isRunning():
-                inst._pm.stop()
-                if not inst._pm.wait_for_stop(3000):
-                    inst._pm._worker.finished.connect(lambda: inst.deleteLater())
-                    self._instances.remove(inst)
-                    self._active_instance = None
-                    self.instances_changed.emit()
-                    return
+        """删除指定索引的实例
+
+        先停止进程，再从列表移除。如果 stop() 后 worker 仍未结束，
+        通过 finished 信号延迟 deleteLater，不在列表移除前连接信号以避免悬空引用。
+        """
+        if not (0 <= index < len(self._instances)):
+            return
+        inst = self._instances[index]
+        # stop() 内部已发出 taskkill + 500ms wait，绝大多数情况同步结束
+        inst.stop()
+        if inst._pm._worker and inst._pm._worker.isRunning():
+            # worker 未能及时结束：连接 finished 信号延迟清理，但仍从列表移除
+            # finished 最多触发一次，lambda 持有 inst 引用是安全的（不会被重复 deleteLater）
+            inst._pm._worker.finished.connect(lambda: inst.deleteLater())
+        else:
             inst.deleteLater()
-            if self._active_instance is inst:
-                self._active_instance = None
-            self._instances.pop(index)
-            self.instances_changed.emit()
+
+        if self._active_instance is inst:
+            self._active_instance = None
+        self._instances.pop(index)
+        self.instances_changed.emit()
 
     def remove_by_name(self, name):
         idx = self.index_of(name)
@@ -168,8 +172,9 @@ class InstanceManager(QObject):
         """停止并清空所有实例"""
         for inst in list(self._instances):
             inst.stop()
+            # stop() 已处理终止逻辑，这里只做最终等待
             if inst._pm._worker and inst._pm._worker.isRunning():
-                inst._pm.wait_for_stop(3000)
+                inst._pm.wait_for_stop(1000)
             inst.deleteLater()
         self._instances.clear()
         self._active_instance = None

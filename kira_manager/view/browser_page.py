@@ -84,7 +84,7 @@ class BrowserPage(QWidget):
         super().__init__(parent)
         self.setObjectName("browserPage")
         self._cards = {}  # name -> InstanceCard
-        self._last_running_names = set()
+        self._last_instance_names = set()
 
         layout = QVBoxLayout(self)
         layout.setContentsMargins(36, 20, 36, 20)
@@ -144,10 +144,10 @@ class BrowserPage(QWidget):
             return
 
         current_names = {inst.name for inst in im.instances()}
-        if current_names == self._last_running_names:
+        if current_names == self._last_instance_names:
             return
 
-        self._last_running_names = current_names.copy()
+        self._last_instance_names = current_names.copy()
 
         # 移除不存在的卡片
         removed = [n for n in self._cards if n not in current_names]
@@ -189,9 +189,8 @@ class BrowserPage(QWidget):
             if card._is_running:
                 webbrowser.open(card.url)
 
-    def closeEvent(self, event):
-        """关闭时清理"""
+    def cleanup(self):
+        """清理定时器和卡片资源"""
         self._sync_timer.stop()
         for card in self._cards.values():
             card.stop_timer()
-        super().closeEvent(event)

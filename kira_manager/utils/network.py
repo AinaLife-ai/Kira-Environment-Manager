@@ -60,6 +60,7 @@ def test_route(route, timeout=5):
         return round((time.time() - start) * 1000, 1)
     except Exception:
         try:
+            start = time.time()  # 重置计时，避免包含 HEAD 超时
             req = urllib.request.Request(test_url, method="GET", headers=headers)
             with urllib.request.urlopen(req, timeout=timeout) as r:
                 r.read(1)

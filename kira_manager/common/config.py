@@ -10,6 +10,8 @@ import os
 import threading
 from pathlib import Path
 
+from kira_manager.common.constants import get_app_data_dir
+
 
 DEFAULT_CONFIG = {
     "project_path": "",
@@ -23,7 +25,7 @@ DEFAULT_CONFIG = {
     "instances": [],  # [{name, port, data_dir, project_path, extra_args}]
 }
 
-CONFIG_FILE = Path(__file__).parent.parent / "manager_config.json"
+CONFIG_FILE = get_app_data_dir() / "manager_config.json"
 
 _lock = threading.RLock()
 _cache = None
@@ -34,6 +36,7 @@ def _ensure_config_file():
     """首次运行时自动从 DEFAULT_CONFIG 生成配置文件"""
     if not CONFIG_FILE.exists():
         try:
+            CONFIG_FILE.parent.mkdir(parents=True, exist_ok=True)
             with open(CONFIG_FILE, "w", encoding="utf-8") as f:
                 json.dump(DEFAULT_CONFIG, f, ensure_ascii=False, indent=2)
         except OSError:
@@ -74,32 +77,40 @@ def load_config():
         return copy.deepcopy(_cache)
 
 
-def save_config(cfg):
-    """写入配置并更新缓存"""
-    global _cache, _cache_mtime
+def _write_atomic(cfg):
+    """仅执行原子写入（不涉及缓存更新，调用方负责在适当的锁范围内使用）"""
     tmp = CONFIG_FILE.with_suffix(".tmp")
+    try:
+        with open(tmp, "w", encoding="utf-8") as f:
+            json.dump(cfg, f, ensure_ascii=False, indent=2)
+        os.replace(str(tmp), str(CONFIG_FILE))
+        return True
+    except Exception as e:
+        try:
+            if tmp.exists():
+                tmp.unlink()
+        except OSError:
+            pass
+        try:
+            from kira_manager.utils.logger import logger
+            logger.warning(f"写入配置文件失败 ({CONFIG_FILE}): {e}")
+        except ImportError:
+            pass
+        return False
+
+
+def save_config(cfg):
+    """写入配置并更新缓存（外部调用入口）"""
+    global _cache, _cache_mtime
     with _lock:
         old_cache = _cache
         old_mtime = _cache_mtime
         _cache = copy.deepcopy(cfg)
-        try:
-            with open(tmp, "w", encoding="utf-8") as f:
-                json.dump(cfg, f, ensure_ascii=False, indent=2)
-            os.replace(str(tmp), str(CONFIG_FILE))
+        if _write_atomic(cfg):
             _cache_mtime = _get_mtime()
-        except Exception as e:
+        else:
             _cache = old_cache
             _cache_mtime = old_mtime
-            try:
-                if tmp.exists():
-                    tmp.unlink()
-            except OSError:
-                pass
-            try:
-                from kira_manager.utils.logger import logger
-                logger.warning(f"写入配置文件失败 ({CONFIG_FILE}): {e}")
-            except ImportError:
-                pass
 
 
 def get(key):
@@ -119,10 +130,14 @@ def set_config(key, value):
         if _cache is None or mtime != _cache_mtime:
             _cache = _read_file()
             _cache_mtime = mtime
+        old_value = _cache.get(key)
         _cache[key] = value
         cfg_copy = copy.deepcopy(_cache)
-        # 在锁内完成写入，消除 TOCTOU 窗口
-        save_config(cfg_copy)
+        if _write_atomic(cfg_copy):
+            _cache_mtime = _get_mtime()
+        else:
+            # 写入失败，回滚内存缓存
+            _cache[key] = old_value
 
 
 def full():

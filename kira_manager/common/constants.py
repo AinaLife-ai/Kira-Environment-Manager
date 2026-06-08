@@ -1,5 +1,28 @@
 """项目级常量 —— 集中管理所有硬编码数值"""
 
+import os
+import sys
+from pathlib import Path
+
+
+def get_app_data_dir():
+    """返回应用程序数据目录（配置、日志等持久化文件存放位置）
+
+    冻结模式：使用平台标准用户数据目录（可写）
+    开发模式：使用代码所在目录
+    """
+    if getattr(sys, 'frozen', False):
+        if os.name == 'nt':
+            base = os.environ.get('APPDATA', os.path.expanduser('~'))
+            return Path(base) / "KiraManager"
+        elif sys.platform == 'darwin':
+            return Path(os.path.expanduser('~')) / "Library" / "Application Support" / "KiraManager"
+        else:
+            return Path(os.environ.get('XDG_CONFIG_HOME', os.path.expanduser('~/.config'))) / "kira-manager"
+    else:
+        return Path(__file__).parent.parent
+
+
 # KiraAI 默认端口
 DEFAULT_PORT = 5267
 

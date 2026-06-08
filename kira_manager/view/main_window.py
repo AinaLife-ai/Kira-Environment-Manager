@@ -1,6 +1,6 @@
 """主窗口 - FluentWindow 侧边导航布局"""
 
-import os
+from pathlib import Path
 
 from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import QMessageBox
@@ -64,8 +64,12 @@ class MainWindow(FluentWindow):
 
     def initWindow(self):
         self.resize(WINDOW_WIDTH, WINDOW_HEIGHT)
-        self.setWindowTitle("Kira Environment Manager")
-        self.setWindowIcon(QIcon(self._icon_path()))
+        self.setWindowTitle("KiraAI Manager")
+        png_icon = Path(__file__).parent.parent / "app.png"
+        if png_icon.exists():
+            self.setWindowIcon(QIcon(str(png_icon)))
+        else:
+            self.setWindowIcon(QIcon(":/qfluentwidgets/images/logo.png"))
         self.centerOnScreen()
 
     def centerOnScreen(self):
@@ -82,11 +86,6 @@ class MainWindow(FluentWindow):
             (geo.width() - self.width()) // 2,
             (geo.height() - self.height()) // 2,
         )
-
-    @staticmethod
-    def _icon_path():
-        return os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                            '..', 'resources', 'icon.png')
 
     def switchToQWidget(self, routeKey):
         targets = {
@@ -118,7 +117,7 @@ class MainWindow(FluentWindow):
                     card.cleanup()
 
         # 获取运行中的实例
-        im = getattr(self.launch_page, "_im", None)
+        im = getattr(self.launch_page, "instance_manager", lambda: None)()
         if im:
             running = [inst for inst in im.instances() if inst.is_running()]
             if running:
@@ -143,6 +142,6 @@ class MainWindow(FluentWindow):
 
         # 停止浏览器页面定时器
         if hasattr(self, 'browser_page'):
-            self.browser_page.closeEvent(event)
+            self.browser_page.cleanup()
 
         event.accept()

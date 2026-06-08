@@ -61,7 +61,7 @@ class HomePage(QWidget):
         self.main_layout.setSpacing(20)
 
         # 标题区
-        title = TitleLabel("Kira Environment Manager", self)
+        title = TitleLabel("KiraAI Manager", self)
         self.main_layout.addWidget(title)
 
         subtitle = BodyLabel("管理你的 KiraAI 数字生命", self)
@@ -129,7 +129,7 @@ class HomePage(QWidget):
         else:
             self.run_card.set_value("未运行", status_color(None))
 
-    def refresh_status(self, force=False):
+    def refresh_status(self):
 
         # Python（仅首次检测，运行时不会变）
         v, _ = detect_python()
@@ -155,7 +155,7 @@ class HomePage(QWidget):
 
         # 运行状态 - 从启动页读取
         w = self.window()
-        if w and hasattr(w, "launch_page") and hasattr(w.launch_page, "_im"):
-            self.update_running_status(w.launch_page._im.running_count())
+        if w and hasattr(w, "launch_page") and hasattr(w.launch_page, "running_count"):
+            self.update_running_status(w.launch_page.running_count())
         else:
             self.run_card.set_value("未运行", status_color(None))

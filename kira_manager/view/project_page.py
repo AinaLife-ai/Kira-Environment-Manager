@@ -1,4 +1,4 @@
-"""项目管理页 - KiraAI 下载、更新、版本管理"""
+"""项目管理页 - 项目路径设置、git 更新、版本管理"""
 
 import os
 from PyQt5.QtCore import Qt, QThread, pyqtSignal
@@ -7,13 +7,13 @@ from PyQt5.QtWidgets import (
 )
 
 from qfluentwidgets import (
-    SettingCardGroup, PushSettingCard, PrimaryPushSettingCard,
-    StateToolTip, HyperlinkButton,
-    TextBrowser, SubtitleLabel, FluentIcon as FIF,
+    SettingCardGroup, PushSettingCard,
+    StateToolTip,
+    TextBrowser, SubtitleLabel, BodyLabel, FluentIcon as FIF,
 )
 
 from kira_manager.utils.project import (
-    check_kira_version, is_kira_project, clone_repo,
+    check_kira_version, is_kira_project,
     update_project, check_git_installed, KIRA_GITHUB_URL,
 )
 from kira_manager.utils.helpers import append_and_scroll, get_project_path_fallback
@@ -24,24 +24,18 @@ from kira_manager.common.config import get as cfg_get, set_config as cfg_set, DE
 from kira_manager.common.constants import PAGE_MARGINS
 
 
-class GitWorker(QThread):
-    """后台 git 操作"""
+class PullWorker(QThread):
+    """后台 git pull"""
     line_output = pyqtSignal(str)
     finished = pyqtSignal(bool, str)
 
-    def __init__(self, action, *args):
+    def __init__(self, project_path):
         super().__init__()
-        self.action = action
-        self.args = args
+        self.project_path = project_path
 
     def run(self):
         cb = lambda line: self.line_output.emit(line)
-        if self.action == "clone":
-            ok, msg = clone_repo(*self.args, output_callback=cb)
-        elif self.action == "pull":
-            ok, msg = update_project(*self.args, output_callback=cb)
-        else:
-            ok, msg = False, "未知操作"
+        ok, msg = update_project(self.project_path, output_callback=cb)
         self.finished.emit(ok, msg)
 
 
@@ -62,6 +56,7 @@ class ProjectPage(QScrollArea):
         layout.setSpacing(16)
 
         layout.addWidget(SubtitleLabel("项目管理", container))
+        layout.addWidget(BodyLabel("安装、检测更新", container))
 
         # === 项目路径 ===
         self.path_group = SettingCardGroup("项目路径", container)
@@ -69,7 +64,7 @@ class ProjectPage(QScrollArea):
         self._auto_detect_path()
         current_path = cfg_get("project_path")
         self.path_card = PushSettingCard(
-            "浏览", FIF.FOLDER, "KiraAI 项目目录",
+            "浏览", FIF.FOLDER, "进行检测的 KiraAI 项目目录",
             current_path or "未设置", self.path_group,
         )
         self.path_card.clicked.connect(self._select_project)
@@ -92,13 +87,6 @@ class ProjectPage(QScrollArea):
 
         # === 操作 ===
         self.action_group = SettingCardGroup("操作", container)
-
-        self.clone_card = PrimaryPushSettingCard(
-            "下载", FIF.DOWNLOAD, "下载 KiraAI",
-            "从 GitHub 克隆最新代码", self.action_group,
-        )
-        self.clone_card.clicked.connect(self._clone_project)
-        self.action_group.addSettingCard(self.clone_card)
 
         self.update_card = PushSettingCard(
             "更新", FIF.UPDATE, "更新项目",
@@ -171,39 +159,6 @@ class ProjectPage(QScrollArea):
         else:
             notify_error("无效", "所选目录不是有效的 KiraAI 项目", parent=self)
 
-    def _clone_project(self):
-        if not check_git_installed():
-            notify_error("未安装 Git", "请先安装 Git: https://git-scm.com/", parent=self)
-            return
-
-        default_dir = os.path.dirname(
-            os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-        )
-        target = QFileDialog.getExistingDirectory(self, "选择下载目录", default_dir)
-        if not target:
-            return
-
-        kira_dir = os.path.join(target, "KiraAI")
-        url = cfg_get("kira_repo_url") or KIRA_GITHUB_URL
-
-        self.console.clear()
-        self.clone_card.setEnabled(False)
-
-        if self._worker and self._worker.isRunning():
-            self._worker.terminate()
-            self._worker.wait(2000)
-
-        self._state_tooltip = StateToolTip(
-            "正在下载 KiraAI", "请稍候...", self.window(),
-        )
-        self._state_tooltip.move(self._state_tooltip.getSuitablePos())
-        self._state_tooltip.show()
-
-        self._worker = GitWorker("clone", url, kira_dir)
-        self._worker.line_output.connect(self._on_log_line)
-        self._worker.finished.connect(self._on_clone_done)
-        self._worker.start()
-
     def _update_project(self):
         project_path = cfg_get("project_path")
         if not project_path:
@@ -223,24 +178,13 @@ class ProjectPage(QScrollArea):
         self._state_tooltip.move(self._state_tooltip.getSuitablePos())
         self._state_tooltip.show()
 
-        self._worker = GitWorker("pull", project_path)
+        self._worker = PullWorker(project_path)
         self._worker.line_output.connect(self._on_log_line)
         self._worker.finished.connect(self._on_update_done)
         self._worker.start()
 
     def _on_log_line(self, line):
         append_and_scroll(self.console, line)
-
-    def _on_clone_done(self, ok, msg):
-        self.clone_card.setEnabled(True)
-        self._finish_op(ok, msg)
-
-        if ok and self._worker and len(self._worker.args) > 1:
-            kira_dir = self._worker.args[1]
-            cfg_set("project_path", kira_dir)
-            self.path_card.setContent(kira_dir)
-            ver = check_kira_version(kira_dir) or "未知"
-            self.version_card.setContent(ver)
 
     def _on_update_done(self, ok, msg):
         self.update_card.setEnabled(True)

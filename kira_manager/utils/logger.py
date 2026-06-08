@@ -23,7 +23,9 @@ import traceback
 from datetime import datetime
 from pathlib import Path
 
-LOG_DIR = Path(__file__).parent.parent / "logs"
+from kira_manager.common.constants import get_app_data_dir
+
+LOG_DIR = get_app_data_dir() / "logs"
 LOG_FILE = LOG_DIR / "kira_manager.log"
 MAX_BYTES = 5 * 1024 * 1024  # 5 MB per file
 BACKUP_COUNT = 7              # keep 7 rotated files
@@ -104,7 +106,7 @@ def setup_logging(log_dir=None):
         _log_path = str(log_path)
 
         logger.info("=" * 50)
-        logger.info(f"Kira Environment Manager 启动 — {datetime.now().isoformat()}")
+        logger.info(f"KiraAI Manager 启动 — {datetime.now().isoformat()}")
         logger.info(f"日志文件: {log_path}")
 
         _initialized = True
