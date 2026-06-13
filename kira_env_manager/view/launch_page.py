@@ -679,6 +679,9 @@ class LaunchPage(QScrollArea):
         layout.addLayout(console_header)
 
         self.console = TextBrowser(container)
+        _cf = self.console.font()
+        _cf.setFamilies(["Microsoft YaHei UI", "Segoe UI", "Arial", "sans-serif"])
+        self.console.setFont(_cf)
         self.console.setPlaceholderText("选择实例后点击启动...")
         layout.addWidget(self.console, 1)
 
