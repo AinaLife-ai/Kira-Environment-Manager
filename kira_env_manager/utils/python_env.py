@@ -128,7 +128,9 @@ def create_venv(venv_path, python_exe=None):
     except subprocess.TimeoutExpired:
         return False, "创建超时"
     except Exception as e:
-        return False, f"创建失败: {str(e)}"
+        import logging
+        logging.getLogger(__name__).exception("创建虚拟环境失败")
+        return False, f"创建失败: 请查看日志"
 
 
 def _normalize_pkg_name(name):
