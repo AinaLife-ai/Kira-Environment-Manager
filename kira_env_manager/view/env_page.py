@@ -93,7 +93,6 @@ class InstallWorker(QThread):
 
 class EnvPage(QScrollArea):
 
-    _dep_status_label = None
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -237,19 +236,16 @@ class EnvPage(QScrollArea):
         project_path = cfg_get("project_path")
         venv_path = cfg_get("venv_path")
         if not project_path or not venv_path or not is_venv(venv_path):
-            if self._dep_status_label:
-                self._dep_status_label.setVisible(False)
+            self._dep_status_label.setVisible(False)
             return
 
         req_path = os.path.join(project_path, "requirements.txt")
         if not os.path.exists(req_path):
-            if self._dep_status_label:
-                self._dep_status_label.setVisible(False)
+            self._dep_status_label.setVisible(False)
             return
 
-        all_ok, missing, msg = check_dependencies_installed(venv_path, req_path)
-        if self._dep_status_label:
-            if all_ok:
+        all_ok, missing, _ = check_dependencies_installed(venv_path, req_path)
+        if all_ok:
                 self._dep_status_label.setText("✅ 依赖全部已安装")
                 self._dep_status_label.setStyleSheet("color: #4caf50;")
             else:
@@ -479,12 +475,13 @@ class EnvPage(QScrollArea):
         if ok:
             notify_success("成功", msg, parent=self)
             # 通知启动管理页刷新卡片依赖状态
+            self.dependencies_changed.emit()
             try:
                 w = self.window()
                 if w and hasattr(w, "launch_page"):
                     w.launch_page._refresh_all_cards_deps()
-            except Exception:
-                pass
+            except Exception as e:
+                logger.warning(f"刷新启动管理页卡片失败: {e}", exc_info=True)
         else:
             logger.error(f"依赖安装失败: {msg}")
             notify_error("失败", msg, parent=self)
